@@ -17,6 +17,7 @@ registerDoParallel(cl)
 #wth distribution and expand is the simulation number
 expanded_simulations_list <- foreach(w_index = 1:15390) %dopar% {
   #this length needs to be equal to the number of simulations. 
+  library("epitools")
   expand_list<- vector(mode = "list", length = num_sims)
   for (expand_index in 1:num_sims) {
     #expand the simulation for the wth simulation

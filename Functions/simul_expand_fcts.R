@@ -35,8 +35,8 @@ expand_fct <- function(simulation_table){
   ##one for midrank
   simul_table<- as.matrix(simulation_table)
   expanded_table <- matrix(data = NA, nrow = num_data_per_sim, ncol = 4)
-  #input expanded data
-  expanded_table[,1:2] <- expand.table(simulation_table)
+  
+  
   #calc mid and nominal vectors
   midrank_vector <- midrank_fct(simul_table)
   nominal_vector <- nominal_fct(simul_table)
@@ -62,11 +62,18 @@ expand_fct <- function(simulation_table){
     prev_index <- end_index
   }
   #column names
-  colnames(expanded_table)<- c( "categoric", "Success=1", "nominal", "midrank")
-  
+  colnames(expanded_table)<- c( "Success=1", "categoric", "nominal", "midrank")
+  #expanded_data
+  expanded_data <- expand.table(simulation_table)
+  #return(expanded_data)
+  #input expanded data, with switch to accomodate desired columns
+  expanded_table[,2] <- expanded_data[,1]
+  expanded_table[,1] <- expanded_data[,2]
+  #Jenky fix for unclear return of 1s and 2s, checked for correct
+  expanded_table[,1] <- expanded_table[,1] %% 2
   #write in factor for category
-  expanded_table[1:num_data_per_sim, 1] <- 
-    as.factor(expanded_table[1:num_data_per_sim, 1])
+  expanded_table[1:num_data_per_sim, 2] <- 
+    as.factor(expanded_table[1:num_data_per_sim, 2])
   
   return(expanded_table)
 }

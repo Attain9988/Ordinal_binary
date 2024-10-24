@@ -1,6 +1,6 @@
 lapply(c("./Functions/simul_expand_fcts.R", "./Functions/score_interval.R"), 
        source)
-
+#for a single expanded output contained in
 #testing failure vs success
 #build the models and predictions
 #logistic per category
@@ -52,7 +52,7 @@ logistic_fct <- function(expanded, distrib_index){
   #is nominal contained, 0 not contained 1 contained. 
   ##At least 60% of the categories must contain
   cat_cont <- ifelse(mean(contained_cat < .6), 0,1)
-  #is nominal contained, 0 contained 1 not
+  #is nominal contained, 0 not contained 1 contained
   nom_cont <- ifelse(mean(contained_nom < .6), 0,1)
   #mid
   mid_cont <- ifelse(mean(contained_mid < .6), 0,1)
