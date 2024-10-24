@@ -3,12 +3,14 @@ lapply(c("foreach", "doParallel", "epitools", "randomForest"), library, characte
 #import functions
 source("./Functions/simulations_fcts.R")
 load("./Data/labels.Rdata")
+
+
 multinomials <- readRDS("./Data/multinomials.rds")
 all_risks_and_probs <- readRDS("./Data/risk_prob.rds")
 
 #now do the simulations
 
-
+all_risks_and_probs[0]
 
 #code for simulation
 

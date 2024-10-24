@@ -18,7 +18,7 @@ single_sim_fct <- function(probs_vals, risks_vals){
   #calculate failures from 
   failures_vect <- category_totals-successes_vect
   matrix_vals <- as.matrix(cbind( successes_vect, failures_vect))
-  colnames(matrix_vals)<- c( "success", "failure")
+  colnames(matrix_vals)<- c( 1, 0)
   rownames(matrix_vals)<- seq(1, length(failures_vect))
   return(matrix_vals)
 }

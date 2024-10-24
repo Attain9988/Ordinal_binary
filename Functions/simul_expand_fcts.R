@@ -35,11 +35,12 @@ expand_fct <- function(simulation_table){
   ##one for midrank
   simul_table<- as.matrix(simulation_table)
   expanded_table <- matrix(data = NA, nrow = num_data_per_sim, ncol = 4)
-  #column names
-  colnames(expanded_table)<- c("Success=1", "categoric", "nominal", "midrank")
+  #input expanded data
+  expanded_table[,1:2] <- expand.table(simulation_table)
   #calc mid and nominal vectors
   midrank_vector <- midrank_fct(simul_table)
   nominal_vector <- nominal_fct(simul_table)
+  #bind vectors to table
   #pull degree/ number of rows so we can index
   degree_val <- nrow(simul_table)
   #set initial previous index
@@ -47,35 +48,25 @@ expand_fct <- function(simulation_table){
   for (row_index_val in 1:degree_val) {
     #total number of entries in category
     n_occurences<- sum(simul_table[row_index_val,])
-    #successes in category
-    n_succ <- simul_table[row_index_val, 1]
-    #failures in category
-    n_fail <- simul_table[row_index_val, 2]
-    #
-    succ_vect<- rep(1, n_succ)
-    fail_vect <- rep(0, n_fail)
-    #total vector
-    succ_fail <- append(succ_vect, fail_vect)
+    #add in mid and nominal
     mid_vect <- rep(midrank_vector[row_index_val], n_occurences)
     nom_vect <- rep(nominal_vector[row_index_val], n_occurences)
     #calculate last index
     end_index <- n_occurences+prev_index
     #first index
     init_index <- prev_index+1
-    #writing in success failure etc when there is a vector of length greater 
-    ##than 0
-    if(length(succ_fail)>0){
-      expanded_table[init_index:end_index, 1]<- succ_fail
-      #category
-      expanded_table[init_index:end_index, 3] <- nom_vect
-      #midrank
-      expanded_table[init_index:end_index, 4] <- mid_vect
-    }
+    expanded_table[init_index:end_index, 3] <- nom_vect
+    #midrank
+    expanded_table[init_index:end_index, 4] <- mid_vect
     #iterate index to find ends
     prev_index <- end_index
   }
+  #column names
+  colnames(expanded_table)<- c( "categoric", "Success=1", "nominal", "midrank")
+  
   #write in factor for category
-  expanded_table[1:num_data_per_sim, 2] <- 
-    as.factor(expanded_table[1:num_data_per_sim, 3])
+  expanded_table[1:num_data_per_sim, 1] <- 
+    as.factor(expanded_table[1:num_data_per_sim, 1])
+  
   return(expanded_table)
 }
