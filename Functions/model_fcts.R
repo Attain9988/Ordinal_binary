@@ -11,9 +11,9 @@ logistic_fct <- function(expanded, distrib_index){
   #force as factor
   expanded$categoric <- as.factor(expanded$categoric)
   #models
-  cat_mod <- glm(`Success=1` ~ categoric, data = expanded)
-  nom_mod <- glm(`Success=1`~ nominal, data = expanded)
-  mid_mod <- glm(`Success=1` ~ midrank, data = expanded)
+  cat_mod <- glm(Success=1 ~ categoric, data = expanded)
+  nom_mod <- glm(Success=1~ nominal, data = expanded)
+  mid_mod <- glm(Success=1 ~ midrank, data = expanded)
   
   
   #makes vectors of levels for confint/predic

@@ -42,7 +42,7 @@ registerDoParallel(cl)
 model_fails_list <- foreach(b_index = 1:length(all_risks_and_probs)) %dopar% {
   
   
-  cur_expanded_sim <- single_simulation_fct(all_risks_and_probs[[b_index]])
+  #cur_expanded_sim <- single_simulation_fct(all_risks_and_probs[[b_index]])
   #initialize
   model_list<- vector(mode = "list", length = nSims)
   #for each trial

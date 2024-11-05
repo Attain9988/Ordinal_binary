@@ -48,18 +48,21 @@ expand_fct <- function(simulation_table){
   for (row_index_val in 1:degree_val) {
     #total number of entries in category
     n_occurences<- sum(simul_table[row_index_val,])
-    #add in mid and nominal
-    mid_vect <- rep(midrank_vector[row_index_val], n_occurences)
-    nom_vect <- rep(nominal_vector[row_index_val], n_occurences)
-    #calculate last index
-    end_index <- n_occurences+prev_index
-    #first index
-    init_index <- prev_index+1
-    expanded_table[init_index:end_index, 3] <- nom_vect
-    #midrank
-    expanded_table[init_index:end_index, 4] <- mid_vect
-    #iterate index to find ends
-    prev_index <- end_index
+    if (n_occurences != 0)
+    {
+      #add in mid and nominal
+      mid_vect <- rep(midrank_vector[row_index_val], n_occurences)
+      nom_vect <- rep(nominal_vector[row_index_val], n_occurences)
+      #calculate last index
+      end_index <- n_occurences+prev_index
+      #first index
+      init_index <- prev_index+1
+      expanded_table[init_index:end_index, 3] <- nom_vect
+      #midrank
+      expanded_table[init_index:end_index, 4] <- mid_vect
+      #iterate index to find ends
+      prev_index <- end_index
+    }
   }
   #column names
   colnames(expanded_table)<- c( "Success=1", "categoric", "nominal", "midrank")
@@ -77,3 +80,5 @@ expand_fct <- function(simulation_table){
   
   return(expanded_table)
 }
+
+
