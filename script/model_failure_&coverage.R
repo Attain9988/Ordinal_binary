@@ -44,9 +44,9 @@ model_fails_list <- foreach(b_index = 1:length(all_risks_and_probs)) %dopar% {
   
   #cur_expanded_sim <- single_simulation_fct(all_risks_and_probs[[b_index]])
   #initialize
-  model_list<- vector(mode = "list", length = nSims)
+  model_list<- vector(mode = "list", length = num_sims)
   #for each trial
-  for (model_index in 1:nSims) {
+  for (model_index in 1:num_sims) {
     #run the models
     #for each distribution and then each trial of each, write in 1s for 
     

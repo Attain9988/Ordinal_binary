@@ -8,10 +8,16 @@ succeses_fct <- function(multinomial, risk){
 
 #calculates one simulation based on one probability and risk distribution
 #returns a matrix of the number of total  events in each category, successes, 
-#and failures
+#and failures uses while to avoid empty categories
 single_sim_fct <- function(probs_vals, risks_vals){
-  #generates random samples for sampling num_data_per_sim data points
-  category_totals <- rmultinom(1, num_data_per_sim, probs_vals)
+  #generates fully empty categories for the inital while
+  category_totals <- rep(0, length(probs_vals))
+  #uses while to ensure no empty categories by regenerating
+  while (any(category_totals == 0)) {
+    #generates random samples for sampling num_data_per_sim data points
+    category_totals <- rmultinom(1, num_data_per_sim, probs_vals)
+  }
+  
   #bind probs and risks to 
   probs_risks <- cbind(category_totals, risks_vals)
   successes_vect <- sapply(category_totals, succeses_fct, risk= risks_vals)
