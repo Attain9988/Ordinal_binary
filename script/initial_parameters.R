@@ -7,7 +7,7 @@ distribution_labels <- c("normal", "bimodal", "left_skew", "right_skew",
 risk_distrib_labels <- c("addition", "multiplication", "power")
 #set the number of simulations and the number of data points in each simulated 
 ##trial
-num_sims <- 10
+num_sims <- 4
 num_data_per_sim <- 40
 #vector of rankings
 rankings <- c("categorical", "nominal", "midrank")

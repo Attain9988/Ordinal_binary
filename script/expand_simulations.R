@@ -16,7 +16,7 @@ registerDoParallel(cl)
 #expand all simulations. [[w_index]][[expand_index]] where w index is the 
 #wth distribution and expand is the simulation number
 
-expanded_simulations_list <- foreach(w_index = 1:15390) %dopar% {
+expanded_simulation_list <- foreach(w_index = 1:15390) %dopar% {
   #this length needs to be equal to the number of simulations.
   library("epitools")
   expand_list<- vector(mode = "list", length = num_sims)
@@ -31,4 +31,4 @@ expanded_simulations_list <- foreach(w_index = 1:15390) %dopar% {
 stopCluster(cl)
 
 
-saveRDS(expanded_simulations_list, "./Data/expanded_simulations.rds")
+saveRDS(expanded_simulation_list, "./Data/expanded_simulations.rds")
