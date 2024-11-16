@@ -8,7 +8,7 @@ source("./Functions/simul_expand_fcts.R")
 load("./Data/labels.Rdata")
 #simulations_list <- readRDS("./Data/simulations.rds")
 all_risks_and_probs <- readRDS("./Data/risk_prob.rds")
-multinomials <- readRDS("./Data/multinomials.rds")
+
 
 
 #fully running through simulation_gen and expanded simulations for one distribution

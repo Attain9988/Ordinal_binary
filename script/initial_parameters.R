@@ -9,6 +9,8 @@ risk_distrib_labels <- c("addition", "multiplication", "power")
 ##trial
 num_sims <- 4
 num_data_per_sim <- 40
+#fraction of categories that need to pass to be considered a success
+contained_thres <- 0.6
 #vector of rankings
 rankings <- c("categorical", "nominal", "midrank")
 save(degrees, distribution_labels, risk_distrib_labels, num_data_per_sim, 
