@@ -233,7 +233,7 @@ num_cores <- detectCores()
 cl <- makeCluster(num_cores)
 registerDoParallel(cl)
 coverage <- foreach(b_index = 1:length(all_risks_and_probs), 
-                    .combine = 'cbind', .packages = "epitools") %dopar% {
+                    .combine = 'rbind', .packages = "epitools") %dopar% {
   
   #run distributions in parallel
   distribution_results(b_index)
