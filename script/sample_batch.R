@@ -221,19 +221,15 @@ distribution_results <- function(distrib_index){
   coverage_cat <- mean(distrib_contained_mat[,1])
   coverage_nom <- mean(distrib_contained_mat[,2])
   coverage_mid <- mean(distrib_contained_mat[,3])
-  variance_cat <- var(distrib_contained_mat[,1])
-  variance_nom <- var(distrib_contained_mat[,2])
-  variance_mid <- var(distrib_contained_mat[,3])
-  return(c(coverage_cat,coverage_nom,coverage_mid, variance_cat, variance_nom,
-           variance_mid))
+  return(c(coverage_cat,coverage_nom,coverage_mid))
 }
 num_cores <- detectCores()
 
+sample_length = 10
 #make a cluster of the cores and parallize
 cl <- makeCluster(num_cores)
 registerDoParallel(cl)
-coverage <- foreach(b_index = 1:length(all_risks_and_probs), 
-                    .combine = 'cbind', .packages = "epitools") %dopar% {
+coverage <- foreach(b_index = 1:sample_length, .combine = 'cbind', .packages = "epitools") %dopar% {
   
   #run distributions in parallel
   distribution_results(b_index)
