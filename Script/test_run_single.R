@@ -1,10 +1,16 @@
 #import libs
-lapply(c("foreach", "doParallel", "epitools", "randomForest"), library, character.only = T)
+lapply(c("foreach", "doParallel", "randomForest","epitools"), library, character.only = T)
 #import functions
 lapply(c("./Functions/score_interval.R"), source)
 
 
 load("./Data/labels.Rdata")
+
+
+
+
+
+
 
 all_risks_and_probs <- readRDS("./Data/risk_prob.rds")
 
@@ -167,9 +173,9 @@ logistic_fct <- function(expanded, true_risks){
     #number of entries in that category
     nval<- length(which(expanded$categoric == category_index))
     #score interval w/95% conf
-    score_cat <- score_interval (predict_cat[category_index], nval, .05)
-    score_nom <- score_interval(predict_nom[category_index], nval, .05)
-    score_mid <- score_interval(predict_mid[category_index], nval, .05)
+    score_cat <- score_interval (predict_cat[category_index], nval, .95)
+    score_nom <- score_interval(predict_nom[category_index], nval, .95)
+    score_mid <- score_interval(predict_mid[category_index], nval, .95)
     #is contained, true if true value within bounds
     contained_cat[category_index] <- true_val >= score_cat[1] & 
       true_val <= score_cat[2]
@@ -230,13 +236,6 @@ distribution_results <- function(distrib_index){
 num_cores <- detectCores()
 
 #make a cluster of the cores and parallize
-cl <- makeCluster(num_cores)
-registerDoParallel(cl)
-coverage <- foreach(b_index = 1:50, 
-                    .combine = 'rbind', .packages = "epitools") %dopar% {
-  
-  #run distributions in parallel
-  distribution_results(b_index)
-}
-stopCluster(cl)
-saveRDS(coverage, file = "./Data/coverage.rds")
+
+coverage <-  distribution_results(6)
+saveRDS(coverage, file = "./Data/coveragesingle.rds")

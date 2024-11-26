@@ -1,16 +1,13 @@
 #Score interval
 score_interval <- function(p, n, confidence){
-  z_ahalf <- qnorm(confidence/2) #for desired sig level
-  zterm <- z_ahalf^2/n
-  firstsqrtterm <- (2*p + zterm)^2 #first term under square root
-  secondsqrtterm <- 4*p^2*(1+zterm) #second
-  denom <- 2*(1+zterm) #denominator
-  sumpart <- 2*p+zterm # initial part that is summed
-  sqrtpart <- sqrt(firstsqrtterm-secondsqrtterm)
   
+  #number of successes for estimated probability, number of trials, continuity 
+  #correction
+  wilson_score<- prop.test(x = p*n, n = n, conf.level = confidence, 
+                           alternative = "two.sided", correct = TRUE)
   
-  limit2 <- (sumpart+sqrtpart)/denom
-  limit1 <- (sumpart-sqrtpart)/denom
+  limit2 <- wilson_score[[6]][2]
+  limit1 <- wilson_score[[6]][1]
   
   limits <- cbind(limit1, limit2)
   return(limits)
