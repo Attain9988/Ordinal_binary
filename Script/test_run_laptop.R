@@ -1,7 +1,9 @@
+#start timing
+start_time <- Sys.time()
 #import libs
-lapply(c("foreach", "doParallel", "devtools", "randomForest","epitools"), library, character.only = T)
+lapply(c("foreach", "doParallel", "randomForest","epitools"), library, character.only = T)
 #import functions
-lapply(c("./Functions/score_interval.R"), source)
+lapply(c("./Functions/score_interval_hand.R"), source)
 
 
 load("./Data/labels.Rdata")
@@ -145,9 +147,9 @@ logistic_fct <- function(expanded, true_risks){
   #force as factor
   expanded$categoric <- as.factor(expanded$categoric)
   #models
-  cat_mod <- glm(`Success=1` ~ categoric, data = expanded)
-  nom_mod <- glm(`Success=1`~ nominal, data = expanded)
-  mid_mod <- glm(`Success=1` ~ midrank, data = expanded)
+  cat_mod <- glm(`Success=1` ~ categoric, data = expanded, family = binomial())
+  nom_mod <- glm(`Success=1`~ nominal, data = expanded, family = binomial())
+  mid_mod <- glm(`Success=1` ~ midrank, data = expanded, family = binomial())
   
   
   
@@ -173,9 +175,9 @@ logistic_fct <- function(expanded, true_risks){
     #number of entries in that category
     nval<- length(which(expanded$categoric == category_index))
     #score interval w/95% conf
-    score_cat <- score_interval (predict_cat[category_index], nval, .05)
-    score_nom <- score_interval(predict_nom[category_index], nval, .05)
-    score_mid <- score_interval(predict_mid[category_index], nval, .05)
+    score_cat <- score_interval (predict_cat[category_index], nval, .95)
+    score_nom <- score_interval(predict_nom[category_index], nval, .95)
+    score_mid <- score_interval(predict_mid[category_index], nval, .95)
     #is contained, true if true value within bounds
     contained_cat[category_index] <- true_val >= score_cat[1] & 
       true_val <= score_cat[2]
@@ -245,4 +247,8 @@ coverage <- foreach(b_index = 1:50,
   distribution_results(b_index)
 }
 stopCluster(cl)
-saveRDS(coverage, file = "./Data/coveragelaptop.rds")
+saveRDS(coverage, file = "./Data/coveragelaptop_scoreme.rds")
+
+#end timing
+end_time <- Sys.time()
+time_elapsed <- end_time-start_time

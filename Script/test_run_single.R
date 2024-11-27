@@ -145,9 +145,9 @@ logistic_fct <- function(expanded, true_risks){
   #force as factor
   expanded$categoric <- as.factor(expanded$categoric)
   #models
-  cat_mod <- glm(`Success=1` ~ categoric, data = expanded)
-  nom_mod <- glm(`Success=1`~ nominal, data = expanded)
-  mid_mod <- glm(`Success=1` ~ midrank, data = expanded)
+  cat_mod <- glm(`Success=1` ~ categoric, data = expanded, family = binomial())
+  nom_mod <- glm(`Success=1`~ nominal, data = expanded, family = binomial())
+  mid_mod <- glm(`Success=1` ~ midrank, data = expanded, family = binomial())
   
   
   
@@ -197,7 +197,8 @@ logistic_fct <- function(expanded, true_risks){
 
 #-----
 #for a single distribution does a simulation, expansion, and coverage, 
-#returns the output #takes in only distribution index and risk and probs portion
+#returns the output of contained or not
+#takes in only distribution index and risk and probs portion
 single_distribution_simulation_fct <- function(current_risk_prob){
   #calculate the simulation and output
   simulation_matrix <- 
