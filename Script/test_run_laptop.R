@@ -240,7 +240,7 @@ num_cores <- detectCores()
 #make a cluster of the cores and parallize
 cl <- makeCluster(num_cores)
 registerDoParallel(cl)
-coverage <- foreach(b_index = 1:50, 
+coverage <- foreach(b_index = 1:10, 
                     .combine = 'rbind', .packages = "epitools") %dopar% {
   
   #run distributions in parallel

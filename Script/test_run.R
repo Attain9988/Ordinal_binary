@@ -1,7 +1,7 @@
 #import libs
 lapply(c("foreach", "doParallel", "devtools", "randomForest"), library, character.only = T)
 #import functions
-lapply(c("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Functions/score_interval.R"), source)
+lapply(c("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Functions/score_interval_hand.R"), source)
 
 #importing the epitools library manually since it's not installed
 load_all("/import/home/agmccarthy/R_libraries/epitools")
@@ -238,7 +238,7 @@ distribution_results <- function(distrib_index){
 num_cores <- detectCores()
 
 #make a cluster of the cores and parallize
-cl <- makeCluster(num_cores)
+cl <- makeCluster(12)
 registerDoParallel(cl)
 coverage <- foreach(b_index = 1:50, 
                     .combine = 'rbind', .packages = "devtools") %dopar% {

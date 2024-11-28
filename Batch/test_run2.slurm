@@ -24,4 +24,4 @@ module load R/4.2.2
 
 cd slurm_test_output
 # Launch the MPI application
-srun Rscript /center1/OCSOPLRM/agmccarthy/Ordinal_binary/script/test_run2.R
+srun Rscript /center1/OCSOPLRM/agmccarthy/Ordinal_binary/Script/test_run2.R
