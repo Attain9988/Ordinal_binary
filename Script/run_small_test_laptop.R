@@ -3,28 +3,28 @@
 #computer testing (I like 50). Then get some tea or take a walk. It takes a while ~30 min on 
 #my computer
 #import libs for cluster
-lapply(c("foreach", "doParallel", "devtools"), library, character.only = T)
+#lapply(c("foreach", "doParallel", "devtools"), library, character.only = T)
 #import libs for computer
-#lapply(c("foreach", "doParallel", "devtools", "epitools", "fastglm"), library, character.only = T)
+lapply(c("foreach", "doParallel", "epitools", "fastglm"), library, character.only = T)
 #import functions
 #cluster
-lapply(c("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Functions/score_interval_hand.R"), source)
+#lapply(c("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Functions/score_interval_hand.R"), source)
 #mac/linux
-#lapply(c("./Functions/score_interval_hand.R"), source)
+lapply(c("./Functions/score_interval_hand.R"), source)
 #pc
 #lapply(c(".\Functions\score_interval_hand.R"), source)
 
 #for cluster only!!!! 
 #comment out for computer
 #importing the epitools library manually since it's not installed
-lapply(c("/import/home/agmccarthy/R_libraries/epitools", 
-         "/import/home/agmccarthy/R_libraries/fastglm"), load_all)
+# lapply(c("/import/home/agmccarthy/R_libraries/epitools", 
+#          "/import/home/agmccarthy/R_libraries/fastglm"), load_all)
 
 #load the inital parameters and labels
 #cluster
-load("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/labels_small.Rdata")
+#load("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/labels_small.Rdata")
 #unix
-#load("./Data/labels_small.Rdata")
+load("./Data/labels_small.Rdata")
 #pc
 #load(".\Data\labels_small.Rdata")
 
@@ -34,9 +34,9 @@ load("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/labels_small.Rdata")
 
 #load risks and probabilities of each level from earlier calculations
 #cluster
-all_risks_and_probs <- readRDS("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/risk_prob.rds")
+#all_risks_and_probs <- readRDS("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/risk_prob.rds")
 #unix
-#all_risks_and_probs <- readRDS("./Data/risk_prob.rds")
+all_risks_and_probs <- readRDS("./Data/risk_prob.rds")
 #pc
 #all_risks_and_probs <- readRDS(".\Data\risk_prob.rds")
 
@@ -271,25 +271,24 @@ num_cores <- detectCores()
 cl <- makeCluster(num_cores)
 registerDoParallel(cl)
 #cluster version
-coverage <- foreach(b_index = 1:length(all_risks_and_probs), 
-                    .combine = 'rbind', .packages = "devtools") %dopar% {
-  #needed for cluster since epitools not installed
-  lapply(c("/import/home/agmccarthy/R_libraries/epitools", 
-           "/import/home/agmccarthy/R_libraries/fastglm"), load_all)
-  #run distributions in parallel
-  distribution_results(b_index)
-                    }
-#computer version
-# coverage <- foreach(b_index = 1:length(all_risks_and_probs), 
-#                     .combine = 'rbind', .packages = c("epitools", "fastglm")) %dopar% {
-#                       
-#                       #run distributions in parallel
-#                       distribution_results(b_index)
+# coverage <- foreach(b_index = 1:50, 
+#                     .combine = 'rbind', .packages = "devtools") %dopar% {
+#   #needed for cluster since epitools not installed
+#   lapply(c("/import/home/agmccarthy/R_libraries/epitools", 
+#            "/import/home/agmccarthy/R_libraries/fastglm"), load_all)
+#   #run distributions in parallel
+#   distribution_results(b_index)
 #                     }
+#computer version
+coverage <- foreach(b_index=1:50, .combine = 'rbind', .packages = c("epitools", "fastglm")) %dopar% {
+
+                      #run distributions in parallel
+                      distribution_results(b_index)
+                    }
 stopCluster(cl)
 #cluster
-saveRDS(coverage, file = "/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/coverage_small.rds")
+#saveRDS(coverage, file = "/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/coverage_small.rds")
 #unix
-#saveRDS(coverage, file = "./Data/coverage_small.rds")
+saveRDS(coverage, file = "./Data/coverage_small.rds")
 #pc
 #saveRDS(coverage, file = ".\Data\coverage_small.rds")

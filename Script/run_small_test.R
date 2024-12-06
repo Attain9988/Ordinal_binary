@@ -271,7 +271,7 @@ num_cores <- detectCores()
 cl <- makeCluster(num_cores)
 registerDoParallel(cl)
 #cluster version
-coverage <- foreach(b_index = 1:length(all_risks_and_probs), 
+coverage <- foreach(b_index = 1:50, 
                     .combine = 'rbind', .packages = "devtools") %dopar% {
   #needed for cluster since epitools not installed
   lapply(c("/import/home/agmccarthy/R_libraries/epitools", 
@@ -280,7 +280,7 @@ coverage <- foreach(b_index = 1:length(all_risks_and_probs),
   distribution_results(b_index)
                     }
 #computer version
-# coverage <- foreach(b_index = 1:length(all_risks_and_probs), 
+# coverage <- foreach(b_index = 1:50, 
 #                     .combine = 'rbind', .packages = c("epitools", "fastglm")) %dopar% {
 #                       
 #                       #run distributions in parallel
