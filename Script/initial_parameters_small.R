@@ -14,4 +14,4 @@ contained_thres <- 0.6
 #vector of rankings
 rankings <- c("categorical", "nominal", "midrank")
 save(degrees, distribution_labels, risk_distrib_labels, num_data_per_sim, 
-     num_sims, rankings, contained_thres,  file = "./Data/labels.Rdata")
+     num_sims, rankings, contained_thres,  file = "./Data/labels_small.Rdata")

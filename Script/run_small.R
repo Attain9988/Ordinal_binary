@@ -1,20 +1,46 @@
-#import libs
-lapply(c("foreach", "doParallel", "devtools", "randomForest"), library, character.only = T)
+#for running on personal computer, comment out the lines for cluster and use appropriate lines 
+#for os. This is likely too large to run all the iterations. Use a smaller chunk for personal
+#computer testing (I like 50). Then get some tea or take a walk. It takes a while ~30 min on 
+#my computer
+#import libs for cluster
+lapply(c("foreach", "doParallel", "devtools"), library, character.only = T)
+#import libs for computer
+#lapply(c("foreach", "doParallel", "devtools", "epitools"), library, character.only = T)
 #import functions
+#cluster
 lapply(c("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Functions/score_interval_hand.R"), source)
+#mac/linux
+#lapply(c("./Functions/score_interval_hand.R"), source)
+#pc
+#lapply(c(".\Functions\score_interval_hand.R"), source)
 
+#for cluster only!!!! 
+#comment out for computer
 #importing the epitools library manually since it's not installed
 load_all("/import/home/agmccarthy/R_libraries/epitools")
 
-load("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/labels.Rdata")
+#load the inital parameters and labels
+#cluster
+load("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/labels_small.Rdata")
+#unix
+#load("./Data/labels_small.Rdata")
+#pc
+#load(".\Data\labels_small.Rdata")
 
 
 
 
 
-
-
+#load risks and probabilities of each level from earlier calculations
+#cluster
 all_risks_and_probs <- readRDS("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/risk_prob.rds")
+#unix
+#all_risks_and_probs <- readRDS("./Data/risk_prob.rds")
+#pc
+#all_risks_and_probs <- readRDS(".\Data\risk_prob.rds")
+
+#end set up, start functions used in code
+#-------
 
 #calculates number of successes for a category given the number in the category
 #and the conditional probability, needed for single simulation fct
@@ -26,7 +52,7 @@ succeses_fct <- function(multinomial, risk){
 #single sim fct
 #calculates one simulation based on one probability and risk distribution
 #returns a matrix of the number of total  events in each category, successes, 
-#and failures uses while to avoid empty categories
+#and failures uses while to avoid empty categories successes in first column, failures in second
 single_sim_fct <- function(probs_vals, risks_vals){
   #generates fully empty categories for the inital while
   category_totals <- rep(0, length(probs_vals))
@@ -42,8 +68,6 @@ single_sim_fct <- function(probs_vals, risks_vals){
   #calculate failures from 
   failures_vect <- category_totals-successes_vect
   matrix_vals <- as.matrix(cbind( successes_vect, failures_vect))
-  colnames(matrix_vals)<- c( 1, 0)
-  rownames(matrix_vals)<- seq(1, length(failures_vect))
   return(matrix_vals)
 }
 
@@ -55,15 +79,15 @@ midrank_fct <- function(simulation_table){
   #empty of length of degree (number of rows)
   midrank_vals <- rep(NA, nrow(simulation_table))
   #set initial final previous row
-  n_f_prev_row <- 0
-  #cl*alculate for each row
+  n_prev_row <- 0
+  #calculate for each row
   for (row_index in 1:nrow(simulation_table)) {
     #find the midrank
-    mid <- sum(simulation_table[row_index,])/2 + n_f_prev_row
+    mid <- sum(simulation_table[row_index,])/2 + n_prev_row
     #output
     midrank_vals[row_index]<- mid
     #set new final
-    n_f_prev_row<- sum(simulation_table[1:row_index,])
+    n_prev_row<- sum(simulation_table[1:row_index,])
   }
   return(midrank_vals)
 }
@@ -235,17 +259,32 @@ distribution_results <- function(distrib_index){
   return(c(coverage_cat,coverage_nom,coverage_mid, variance_cat, variance_nom,
            variance_mid))
 }
+
+#--------running everything
 num_cores <- detectCores()
 
 #make a cluster of the cores and parallize
 cl <- makeCluster(num_cores)
 registerDoParallel(cl)
-coverage <- foreach(b_index = 3079:6156, 
+#cluster version
+coverage <- foreach(b_index = 1:length(all_risks_and_probs), 
                     .combine = 'rbind', .packages = "devtools") %dopar% {
-  
+  #needed for cluster since epitools not installed
   load_all("/import/home/agmccarthy/R_libraries/epitools")
   #run distributions in parallel
   distribution_results(b_index)
-}
+                    }
+#computer version
+# coverage <- foreach(b_index = 1:length(all_risks_and_probs), 
+#                     .combine = 'rbind', .packages = "epitools") %dopar% {
+#                       
+#                       #run distributions in parallel
+#                       distribution_results(b_index)
+#                     }
 stopCluster(cl)
-saveRDS(coverage, file = "/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/coverage2.rds")
+#cluster
+saveRDS(coverage, file = "/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/coverage_small.rds")
+#unix
+#saveRDS(coverage, file = "./Data/coverage_small.rds")
+#pc
+#saveRDS(coverage, file = ".\Data\coverage_small.rds")
