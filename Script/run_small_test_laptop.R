@@ -69,6 +69,8 @@ single_sim_fct <- function(probs_vals, risks_vals){
   #calculate failures from 
   failures_vect <- category_totals-successes_vect
   matrix_vals <- as.matrix(cbind( successes_vect, failures_vect))
+  colnames(matrix_vals)<- c( 1, 0)
+  rownames(matrix_vals)<- seq(1, length(failures_vect))
   return(matrix_vals)
 }
 
@@ -172,7 +174,7 @@ logistic_fct <- function(expanded, true_risks){
   #force as factor
   expanded$categoric <- as.factor(expanded$categoric)
   #models
-  cat_mod <- fastglm(`Success=1` ~ categoric, data = expanded, 
+  cat_mod <- glm(`Success=1` ~ categoric, data = expanded, 
                      family = binomial(), method= 3)
   nom_mod <- glm(`Success=1`~ nominal, data = expanded, family = binomial(), 
                  method = 3)
@@ -280,7 +282,7 @@ registerDoParallel(cl)
 #   distribution_results(b_index)
 #                     }
 #computer version
-coverage <- foreach(b_index=1:50, .combine = 'rbind', .packages = c("epitools", "fastglm")) %dopar% {
+coverage <- foreach(b_index=1:50, .combine = 'rbind', .packages = "epitools") %dopar% {
 
                       #run distributions in parallel
                       distribution_results(b_index)
