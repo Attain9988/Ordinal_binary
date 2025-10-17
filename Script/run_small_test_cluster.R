@@ -3,29 +3,29 @@
 #computer testing (I like 50). Then get some tea or take a walk. It takes a while ~30 min on 
 #my computer
 #import libs for cluster
-# lapply(c("foreach", "doParallel", "devtools"), library, character.only = T)
+lapply(c("foreach", "doParallel", "devtools"), library, character.only = T)
 #import libs for computer
-lapply(c("foreach", "doParallel", "epitools", "fastglm", "Rmpi"), library, character.only = T)
+#lapply(c("foreach", "doParallel", "epitools", "fastglm", "Rmpi"), library, character.only = T)
 #import functions
 #cluster
-# lapply(c("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Functions/score_interval_hand.R"), source)
+lapply(c("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Functions/score_interval_hand.R"), source)
 #mac/linux
-lapply(c("./Functions/score_interval_hand.R"), source)
+#lapply(c("./Functions/score_interval_hand.R"), source)
 #pc
 #lapply(c(".\Functions\score_interval_hand.R"), source)
 
 #for cluster only!!!! 
 #comment out for computer
 #importing the epitools library manually since it's not installed
-# lapply(c("/import/home/agmccarthy/R_libraries/epitools",
-#          "/import/home/agmccarthy/R_libraries/fastglm",
-#          "/import/home/agmccarthy/R_libraries/Rmpi"), load_all)
+lapply(c("/import/home/agmccarthy/R_libraries/epitools",
+         "/import/home/agmccarthy/R_libraries/Rmpi", 
+         "import/home/agmccarthy/R_libraries/PropCIs"), load_all)
 
 #load the inital parameters and labels
 #cluster
-# load("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/labels_small.Rdata")
+load("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/labels_small.Rdata")
 #unix
-load("./Data/labels_small.Rdata")
+#load("./Data/labels_small.Rdata")
 #pc
 #load(".\Data\labels_small.Rdata")
 
@@ -35,9 +35,9 @@ load("./Data/labels_small.Rdata")
 
 #load risks and probabilities of each level from earlier calculations
 #cluster
-# all_risks_and_probs <- readRDS("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/risk_prob.rds")
+all_risks_and_probs <- readRDS("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/risk_prob.rds")
 #unix
-all_risks_and_probs <- readRDS("./Data/risk_prob.rds")
+#all_risks_and_probs <- readRDS("./Data/risk_prob.rds")
 #pc
 #all_risks_and_probs <- readRDS(".\Data\risk_prob.rds")
 
@@ -204,9 +204,9 @@ logistic_fct <- function(expanded, true_risks){
     #number of entries in that category
     nval<- length(which(expanded$categoric == category_index))
     #score interval w/95% conf
-    score_cat <- score_interval (predict_cat[category_index], nval, .95)
-    score_nom <- score_interval(predict_nom[category_index], nval, .95)
-    score_mid <- score_interval(predict_mid[category_index], nval, .95)
+    score_cat <- score_interval (predict_cat[category_index], nval, .05)
+    score_nom <- score_interval(predict_nom[category_index], nval, .05)
+    score_mid <- score_interval(predict_mid[category_index], nval, .05)
     #is contained, true if true value within bounds
     contained_cat[category_index] <- true_val >= score_cat[1] & 
       true_val <= score_cat[2]
@@ -269,16 +269,15 @@ distribution_results <- function(distrib_index){
 #num_cores <- detectCores()
 
 #make a cluster of the cores and parallize
-cl <- makeCluster(num_cores)
-registerDoParallel(cl)
-
-start_time <- Sys.time()
-#laptop version
-coverage <- foreach(b_index = 1:5130,.combine = 'rbind', .packages = "epitools") %dopar% {
-  #run distributions in parallel
-  distribution_results(b_index)}
-
+#cl <- makeCluster(num_cores)
+#registerDoParallel(cl)
 #cluster version
+
+mpi.spawn.Rslaves()
+start_time <- Sys.time()
+b_index <- (1:500)
+coverage <- mp.parLapply(b_index, distribution_results)
+
 # coverage <- foreach(b_index = 1:500,
 #                     .combine = 'rbind', .packages = "devtools") %dopar% {
 #   #needed for cluster since epitools not installed
@@ -288,7 +287,9 @@ coverage <- foreach(b_index = 1:5130,.combine = 'rbind', .packages = "epitools")
 #   #run distributions in parallel
 #   distribution_results(b_index)
 #                     }
-
+end_time <- Sys.time()
+mpi.finalize()
+mpi.close.Rslaves()
 #computer version
 # start_time <- Sys.time()
 # coverage <- foreach(b_index = 1:500,
@@ -297,12 +298,12 @@ coverage <- foreach(b_index = 1:5130,.combine = 'rbind', .packages = "epitools")
 #                       #run distributions in parallel
 #                       distribution_results(b_index)
 #                     }
-end_time <- Sys.time()
-stopCluster(cl)
+#end_time <- Sys.time()
+# stopCluster(cl)
 #cluster
-# saveRDS(coverage, file = "/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/coverage_small.rds")
+saveRDS(coverage, file = "/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/coverage_small.rds")
 #unix
-saveRDS(coverage, file = "./Data/coverage_small.rds")
-print(end_time-start_time)
+#saveRDS(coverage, file = "./Data/coverage_small.rds")
+#print(end_time-start_time)
 #pc
 #saveRDS(coverage, file = ".\Data\coverage_small.rds")

@@ -3,28 +3,27 @@
 #computer testing (I like 50). Then get some tea or take a walk. It takes a while ~30 min on 
 #my computer
 #import libs for cluster
-lapply(c("foreach", "doParallel", "devtools"), library, character.only = T)
+#lapply(c("foreach", "doParallel", "devtools"), library, character.only = T)
 #import libs for computer
-#lapply(c("foreach", "doParallel", "devtools", "epitools", "fastglm"), library, character.only = T)
+lapply(c("foreach", "doParallel", "epitools"), library, character.only = T)
 #import functions
 #cluster
-lapply(c("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Functions/score_interval_hand.R"), source)
+# lapply(c("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Functions/score_interval.R"), source)
 #mac/linux
-#lapply(c("./Functions/score_interval_hand.R"), source)
+lapply(c("./Functions/score_interval.R"), source)
 #pc
-#lapply(c(".\Functions\score_interval_hand.R"), source)
+#lapply(c(".\Functions\score_interval.R"), source)
 
 #for cluster only!!!! 
 #comment out for computer
 #importing the epitools library manually since it's not installed
-lapply(c("/import/home/agmccarthy/R_libraries/epitools", 
-         "/import/home/agmccarthy/R_libraries/fastglm"), load_all)
+# lapply(c("/import/home/agmccarthy/R_libraries/epitools"), load_all)
 
 #load the inital parameters and labels
 #cluster
-load("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/labels_small.Rdata")
+# load("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/labels_small.Rdata")
 #unix
-#load("./Data/labels_small.Rdata")
+load("./Data/labels_small.Rdata")
 #pc
 #load(".\Data\labels_small.Rdata")
 
@@ -34,9 +33,9 @@ load("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/labels_small.Rdata")
 
 #load risks and probabilities of each level from earlier calculations
 #cluster
-all_risks_and_probs <- readRDS("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/risk_prob.rds")
+# all_risks_and_probs <- readRDS("/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/risk_prob.rds")
 #unix
-#all_risks_and_probs <- readRDS("./Data/risk_prob.rds")
+all_risks_and_probs <- readRDS("./Data/risk_prob.rds")
 #pc
 #all_risks_and_probs <- readRDS(".\Data\risk_prob.rds")
 
@@ -69,6 +68,8 @@ single_sim_fct <- function(probs_vals, risks_vals){
   #calculate failures from 
   failures_vect <- category_totals-successes_vect
   matrix_vals <- as.matrix(cbind( successes_vect, failures_vect))
+  colnames(matrix_vals)<- c( 1, 0)
+  rownames(matrix_vals)<- seq(1, length(failures_vect))
   return(matrix_vals)
 }
 
@@ -76,6 +77,7 @@ single_sim_fct <- function(probs_vals, risks_vals){
 
 #midrank fct
 # takes in a table of simulated data, one item simulations_list[[]][[]]
+#note that simulated data has two columns, one of #successes, one #failures, and as many rows as it has rank
 midrank_fct <- function(simulation_table){
   #empty of length of degree (number of rows)
   midrank_vals <- rep(NA, nrow(simulation_table))
@@ -83,8 +85,12 @@ midrank_fct <- function(simulation_table){
   n_prev_row <- 0
   #calculate for each row
   for (row_index in 1:nrow(simulation_table)) {
-    #find the midrank
-    mid <- sum(simulation_table[row_index,])/2 + n_prev_row
+    #find the first index
+    initial_index <- 1+n_prev_row
+    #find the final index
+    final_index<- n_prev_row+sum(simulation_table[row_index,])
+    #find the midrank by mean of the initial and final
+    mid <- ((final_index+initial_index)/2)
     #output
     midrank_vals[row_index]<- mid
     #set new final
@@ -150,9 +156,6 @@ expand_fct <- function(simulation_table){
   expanded_table[,1] <- expanded_data[,2]
   #Jenky fix for unclear return of 1s and 2s, checked for correct
   expanded_table[,1] <- expanded_table[,1] %% 2
-  #write in factor for category
-  expanded_table[1:num_data_per_sim, 2] <- 
-    as.factor(expanded_table[1:num_data_per_sim, 2])
   
   return(expanded_table)
 }
@@ -172,12 +175,10 @@ logistic_fct <- function(expanded, true_risks){
   #force as factor
   expanded$categoric <- as.factor(expanded$categoric)
   #models
-  cat_mod <- fastglm(`Success=1` ~ categoric, data = expanded, 
-                     family = binomial(), method= 3)
-  nom_mod <- glm(`Success=1`~ nominal, data = expanded, family = binomial(), 
-                 method = 3)
-  mid_mod <- glm(`Success=1` ~ midrank, data = expanded, family = binomial(), 
-                 method = 3)
+  cat_mod <- glm(`Success=1` ~ categoric, data = expanded, 
+                     family = binomial())
+  nom_mod <- glm(`Success=1`~ nominal, data = expanded, family = binomial())
+  mid_mod <- glm(`Success=1` ~ midrank, data = expanded, family = binomial())
   
   
   
@@ -203,9 +204,12 @@ logistic_fct <- function(expanded, true_risks){
     #number of entries in that category
     nval<- length(which(expanded$categoric == category_index))
     #score interval w/95% conf
-    score_cat <- score_interval (predict_cat[category_index], nval, .05)
-    score_nom <- score_interval(predict_nom[category_index], nval, .05)
-    score_mid <- score_interval(predict_mid[category_index], nval, .05)
+    score_cat <- score_interval(predict_cat[category_index], nval, 
+                                 conf.level = .95)
+    score_nom <- score_interval(predict_nom[category_index], nval, 
+                                conf.level =.95)
+    score_mid <- score_interval(predict_mid[category_index], nval, 
+                                conf.level = .95)
     #is contained, true if true value within bounds
     contained_cat[category_index] <- true_val >= score_cat[1] & 
       true_val <= score_cat[2]
@@ -215,14 +219,40 @@ logistic_fct <- function(expanded, true_risks){
       true_val <= score_mid[2]
   }
   #is nominal contained, 0 not contained 1 contained. 
-  ##At least 60% of the categories must contain
-  cat_cont <- ifelse(mean(contained_cat) < contained_thres, 0,1)
+  #I know I should re-write this so it pulls the length because we already have 
+  ## a variable for that, but I want to minimize how much code I'm re-writing 
+  ##from the previous idea about testing bulk coverage
+  ##Test first and last and middle categories, and how many contained
+  #assign highest and middle categories
+  final_cat <- length(contained_cat)
+  #figure out if there are an even number of categores
+  even_num_cats <- length(contained_cat)%%2==0
+  #first
+  cat_1_cont <- ifelse(contained_cat[1], 1,0)
   #is nominal contained, 0 not contained 1 contained
-  nom_cont <- ifelse(mean(contained_nom) < contained_thres, 0,1)
+  nom_1_cont <- ifelse(contained_nom[1], 1, 0)
   #mid
-  mid_cont <- ifelse(mean(contained_mid) < contained_thres, 0,1)
+  mid_1_cont <- ifelse(contained_mid[1], 1, 0)
+  #last contained
+  cat_final_cont <- ifelse(contained_cat[final_cat], 1,0)
+  #is nominal contained, 0 not contained 1 contained
+  nom_final_cont <- ifelse(contained_nom[final_cat], 1, 0)
+  #mid
+  mid_final_cont <- ifelse(contained_mid[final_cat], 1, 0)
+  #middle
+  #if(even_num_cats){
+    
+  #}else{
+    
+  #}
+  #total contained
+  cat_total_cont <- mean(contained_cat)
+  #is nominal contained, 0 not contained 1 contained
+  nom_total_cont <- mean(contained_nom)
+  #mid
+  mid_total_cont <- mean(contained_mid)
   #return list/vect with 
-  return(c(cat_cont, nom_cont, mid_cont))
+  return(c(cat_final_cont, nom_final_cont, mid_final_cont))
 }
 
 #-----
@@ -260,8 +290,14 @@ distribution_results <- function(distrib_index){
   variance_cat <- var(distrib_contained_mat[,1])
   variance_nom <- var(distrib_contained_mat[,2])
   variance_mid <- var(distrib_contained_mat[,3])
+  #pull the corresponding controlling variables
+  risk_initial <- as.numeric(all_risks_and_probs[[distrib_index]][[2]][1])
+  risk_final <- as.numeric(all_risks_and_probs[[distrib_index]][[2]][2])
+  risk_distrib <- all_risks_and_probs[[distrib_index]][[2]][3]
+  prob_distrib <- all_risks_and_probs[[distrib_index]][[2]][4]
+  degree <- as.integer(all_risks_and_probs[[distrib_index]][[2]][5])
   return(c(coverage_cat,coverage_nom,coverage_mid, variance_cat, variance_nom,
-           variance_mid))
+           variance_mid,risk_initial,risk_final,risk_distrib,prob_distrib,degree))
 }
 
 #--------running everything
@@ -271,25 +307,47 @@ num_cores <- detectCores()
 cl <- makeCluster(num_cores)
 registerDoParallel(cl)
 #cluster version
-coverage <- foreach(b_index = 1:50, 
-                    .combine = 'rbind', .packages = "devtools") %dopar% {
-  #needed for cluster since epitools not installed
-  lapply(c("/import/home/agmccarthy/R_libraries/epitools", 
-           "/import/home/agmccarthy/R_libraries/fastglm"), load_all)
-  #run distributions in parallel
-  distribution_results(b_index)
-                    }
-#computer version
 # coverage <- foreach(b_index = 1:50, 
-#                     .combine = 'rbind', .packages = c("epitools", "fastglm")) %dopar% {
-#                       
-#                       #run distributions in parallel
-#                       distribution_results(b_index)
+#                     .combine = 'rbind', .packages = "devtools") %dopar% {
+#   #needed for cluster since epitools not installed
+#   lapply(c("/import/home/agmccarthy/R_libraries/epitools", 
+#            "/import/home/agmccarthy/R_libraries/fastglm"), load_all)
+#   #run distributions in parallel
+#   distribution_results(b_index)
 #                     }
+#computer version
+start_time <- Sys.time()
+coverage <- foreach(b_index = 1:length(all_risks_and_probs),
+                    .combine = 'rbind', .packages = c("epitools")) %dopar% {
+
+                      #run distributions in parallel
+                      distribution_results(b_index)
+                    }
+end_time <- Sys.time()
 stopCluster(cl)
+#name columns
+colnames(coverage)<- c("mean_cat", "mean_nom", "mean_mid", "var_cat", "var_nom",
+                       "var_mid", "risk_initial","risk_final","risk_distrib",
+                       "prob_distrib","degree")
+#make dataframe and factor data
+coverage<- as.data.frame(coverage)
+coverage$mean_cat<- as.numeric(coverage$mean_cat)
+coverage$mean_nom<- as.numeric(coverage$mean_nom)
+coverage$mean_mid<- as.numeric(coverage$mean_mid)
+coverage$var_cat<- as.numeric(coverage$var_cat)
+coverage$var_nom<- as.numeric(coverage$var_nom)
+coverage$var_mid<- as.numeric(coverage$var_mid)
+coverage$risk_initial <- as.numeric(coverage$risk_initial)
+coverage$risk_final <- as.numeric(coverage$risk_final)
+coverage$risk_distrib <- as.factor(coverage$risk_distrib)
+coverage$prob_distrib <- as.factor(coverage$prob_distrib)
+coverage$degree <- as.factor(coverage$degree)
+
 #cluster
-saveRDS(coverage, file = "/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/coverage_small.rds")
+#saveRDS(coverage, file = "/center1/OCSOPLRM/agmccarthy/Ordinal_binary/Data/coverage_small.rds")
 #unix
-#saveRDS(coverage, file = "./Data/coverage_small.rds")
+saveRDS(coverage, file = "./Data/coverage_small.rds")
+
+print(end_time-start_time)
 #pc
 #saveRDS(coverage, file = ".\Data\coverage_small.rds")

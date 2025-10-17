@@ -1,13 +1,13 @@
 #!/bin/sh
 
-#SBATCH --partition=t1standard
-#SBATCH --ntasks=12
-#SBATCH --tasks-per-node=24
+#SBATCH --partition=t1small
+#SBATCH --ntasks=6
+#SBATCH --tasks-per-node=3
 #SBATCH --mail-user=agmccarthy@alaska.edu
-#SBATCH --time=04:00:00:00
+#SBATCH --time=00-03:40:00
 #SBATCH --mail-type=END
 #SBATCH --mail-type=FAIL
-#SBATCH --output=run1.%j
+#SBATCH --output=run_small_test.%j
 
 ulimit -s unlimited
 ulimit -l unlimited
@@ -24,4 +24,4 @@ module load R/4.2.2
 
 cd slurm_test_output
 # Launch the MPI application
-srun Rscript /center1/OCSOPLRM/agmccarthy/Ordinal_binary/Script/run1.R
+srun Rscript /center1/OCSOPLRM/agmccarthy/Ordinal_binary/Script/run_small_test_cluster.R

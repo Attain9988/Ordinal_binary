@@ -1,6 +1,6 @@
 
 #import parameters
-
+#if parameters are changed in init parameters, re-run init parameters before this script
 load("./Data/labels.Rdata")
 
 #---
@@ -13,15 +13,15 @@ load("./Data/labels.Rdata")
 #normal fct
 normal_fct<- function(degree){
   set.seed(1002)
-  # Define parameters for the distribution
+  # Define parameters for the distribution-- not important for normal
   mean <- 0
-  std_dev <- 1
+  std_dev <- 2
   num_samples <- 100000  # Increase the number of samples for better accuracy
   
   # Generate samples from the normal distribution
   samples <- rnorm(num_samples, mean = mean, sd = std_dev)
   
-  # Discretize the samples into four equal-sized intervals
+  # Discretize the samples into equal-sized intervals
   breaks <- seq(min(samples), max(samples), length.out = degree+1)
   
   # using hist to calculate number in each
@@ -49,7 +49,7 @@ bimodal_fct<- function(degree){
   # Combine the samples into a single vector
   samples <- c(samples_low, samples_high)
   
-  # Discretize the samples into four equal-sized intervals
+  # Discretize the samples into equal-sized intervals
   breaks <- seq(min(samples), max(samples), length.out = degree+1)
   
   # using hist to calculate number in each
@@ -119,18 +119,16 @@ uniform_fct <- function(degree){
 #distribution indexing etc-- take in which distribution and degree, run the 
 ##appropriate function
 distribution_fct <- function(distribution_id, degree){
-  if(distribution_id ==1){
-    return(normal_fct(degree))
-  }else if(distribution_id ==2){
-    return(bimodal_fct(degree))
-  }else if(distribution_id == 3){
-    return(left_skew_fct(degree))
-  }else if(distribution_id == 4){
-    return(right_skew_fct(degree))
-  }else if(distribution_id == 5){
-    return(uniform_fct(degree))
-  }
+  dist_output <- 
+    switch (distribution_id,
+          normal_fct(degree),
+          bimodal_fct(degree),
+          left_skew_fct(degree),
+          right_skew_fct(degree),
+          uniform_fct(degree))
+  return(dist_output)
 }
+
 #---multinomial generation
 
 #make an empty list for multiomials
@@ -140,7 +138,7 @@ multinomials <- vector(mode = "list", length = length(degrees))
 
 
 
-#create the multinomials indexed by dgree then distrib
+#create the multinomials indexed by degree then distrib
 for (degree_index in 1:length(degrees)) {
   #initialize a list for each distribution
   multinomials[[degree_index]] <- vector(mode = "list", 
@@ -159,8 +157,9 @@ for (degree_index in 1:length(degrees)) {
 #functions input
 #risks functions
 #risk increases by constant at each level
-risk_add_constant <- function(n, r_f, r_i){
-  constant_out <- (r_f-r_i)/(n-1)
+#takes in the degree of the distribution, the highest, and the lowest risk
+risk_add_constant <- function(numeric_degree, r_f, r_i){
+  constant_out <- (r_f-r_i)/(numeric_degree-1)
   return(constant_out)
 } 
 
@@ -170,8 +169,8 @@ risk_add_next <- function(r_prev, constant_in){
 }
 
 #risk multiplied by a constant at each level
-risk_mult_constant <- function(n, r_f, r_i){
-  constant_out <- (r_f/r_i)^(1/(n-1))
+risk_mult_constant <- function(numeric_degree, r_f, r_i){
+  constant_out <- (r_f/r_i)^(1/(numeric_degree-1))
   return(constant_out)
 }
 
@@ -181,8 +180,8 @@ risk_mult_next <- function(r_prev, constant_in){
 }
 
 #risk raised to a constant at each level
-risk_power_constant <- function(n, r_f, r_i){
-  constant_out <- ((log(r_f))/(log(r_i)))^(1/(n-1))
+risk_power_constant <- function(numeric_degree, r_f, r_i){
+  constant_out <- ((log(r_f))/(log(r_i)))^(1/(numeric_degree-1))
   return(constant_out)
 }  
 
@@ -194,46 +193,39 @@ risk_power_next <- function(r_prev, constant_in){
 #all distributions combined into single fcts
 #calculates the risk constant for a given kind of risk distribution, number of 
 #multinomial categories (degree), final risk, and initial risk. 
-risk_constant <- function(distribution_index, n, r_f, r_i){
-  if(distribution_index == 1){
-    risk_output <- risk_add_constant(n, r_f, r_i)
-  }
-  if(distribution_index == 2){
-    risk_output <- risk_mult_constant(n, r_f, r_i)
-  }
-  if(distribution_index == 3){
-    risk_output <- risk_power_constant(n, r_f, r_i)
-  }
-  return(risk_output)
+risk_constant <- function(distribution_index, numeric_degree, r_f, r_i){
+  risk_constant_output <- switch (distribution_index,
+                         risk_add_constant(numeric_degree, r_f, r_i),
+                         risk_mult_constant(numeric_degree, r_f, r_i),
+                         risk_power_constant(numeric_degree, r_f, r_i))
+  return(risk_constant_output)
 }
 #calculates the next risk value based on the previous risk value, the kind of 
 #risk distribution, and the risk constant
 risk_next <- function(distribution_index, r_prev, constant_in){
-  if(distribution_index == 1){
-    risk_output <- risk_add_next(r_prev, constant_in)
-  }
-  if(distribution_index == 2){
-    risk_output <- risk_mult_next(r_prev, constant_in)
-  }
-  if(distribution_index == 3){
-    risk_output <- risk_power_next(r_prev, constant_in)
-  }
-  return(risk_output)
+  risk_next_output<- switch(distribution_index,
+                            risk_add_next(r_prev, constant_in),
+                            risk_mult_next(r_prev, constant_in),
+                            risk_power_next(r_prev, constant_in))
+  return(risk_next_output)
 }
 
 #calculates all the risks with the kind of distribution, the number of groups
 #the final and the inital risk. 
-risks_fct <- function(distribution_index, n, r_f, r_i){
-  constant <- risk_constant(distribution_index, n, r_f, r_i)
+#Takes in the kind of distribution by index (normal, uniform, etc), the numeric
+##degree, the highest, and the lowest risks
+risks_fct <- function(distribution_index, numeric_degree, r_f, r_i){
+  #holds the constant for the increase per level
+  constant <- risk_constant(distribution_index, numeric_degree, r_f, r_i)
   #create vector
-  risks_vect <- rep(NA, n)
+  risks_vect <- rep(NA, numeric_degree)
   #iterate over each group in the multinomial
-  for (iterate_deg_index in 1:n) {
+  for (iterate_deg_index in 1:numeric_degree) {
     #if first, initial
     if(iterate_deg_index == 1){
       risk_current_val <- r_i
       #if last, final
-    }else if(iterate_deg_index == n){
+    }else if(iterate_deg_index == numeric_degree){
       risk_current_val <- r_f
       #otherwise calculate from the risk iterated fct
     } else {
@@ -254,14 +246,14 @@ risks_fct <- function(distribution_index, n, r_f, r_i){
 
 #initial risk and final risk array
 #initial risk is the  condit prob of success at the lowest level, risk f at the highest 
-risk_i <- seq(from= 0, to = 1, length.out = 20)
-risk_f <- seq(from = 0, to = 1, length.out = 20)
-
-#because of multiplicative and power, need to remove 0 from initial
+risks_vect_init <- seq(from= 0, to = 1, by = risks_by)
+risks_length_init <- length(risks_vect_init)
+#length of 
+#because of multiplicative and power, need to remove 0 from initial, and 1 from final
 #further need to remove one more from the initial so that there is at least one left for final
 #similarly, the initial needs to be less than the final risk, so we remove the second for final
-risk_i <- risk_i[-c(1,20)]
-risk_f <- risk_f[-c(1,2)]
+risk_i <- risks_vect_init[-c(1, risks_length_init-1, risks_length_init)]
+risk_f <- risks_vect_init[-c(1,2,risks_length_init)]
 
 #produces a list object indexed by risk distribution, initial risk level,  
 #working final risk level, degree of multinomial, then with one entry for 
@@ -282,25 +274,23 @@ for (risk_dist_index in 1:3) {
                                                     length = num_final_risks)
     #set indext for final risks before we go into the intial iteration, so it 
     #resets each loop
-    counter_risk_f <- 1
-    #now only run for workable final risks (larger than initial)
-    for (r_f_index in 1:length(risk_f)) {
-      #test that this is a working pair
-      if(risk_f[r_f_index]> risk_i[r_i_index]){
-        #preallocate for degree of multinomial
-        risks[[risk_dist_index]][[r_i_index]][[counter_risk_f]]<- 
-          vector(mode = "list", length(multinomials))
-        #iterate for each different degree of multinomial
-        for (multi_deg_index in 1:length(multinomials)) {
-          #calculate
-          risks[[risk_dist_index]][[r_i_index]][[counter_risk_f]][[multi_deg_index]]<- 
-            risks_fct(risk_dist_index, degrees[multi_deg_index], 
-                      risk_f[r_f_index], risk_i[r_i_index])
-          
-        }
-        #move counter up one
-        counter_risk_f <- counter_risk_f+1
+    
+    #now only run for workable final risks (larger than initial, note offset, 
+    ##so ri 1 has 1-19 on final, ri 2 has 2-19, etc)
+    for (r_f_index in r_i_index:length(risk_f)) {
+      
+      #preallocate for degree of multinomial
+      risks[[risk_dist_index]][[r_i_index]][[r_f_index+1-r_i_index]]<- 
+        vector(mode = "list", length(multinomials))
+      #iterate for each different degree of multinomial
+      for (multi_deg_index in 1:length(multinomials)) {
+        #calculate
+        risks[[risk_dist_index]][[r_i_index]][[r_f_index+1-r_i_index]][[multi_deg_index]]<- 
+          risks_fct(risk_dist_index, degrees[multi_deg_index], 
+                    risk_f[r_f_index], risk_i[r_i_index])
+        
       }
+      
       
     }
   }
@@ -327,10 +317,12 @@ counter_for_distribs <- 1
 for (l_index in 1:length(risks)) {
   #for every initial rist
   for (o_index in 1:length(risks[[l_index]])){
-    #for every final risk
+    #for every final risk that works with initial risk
     for (p_index in 1:length(risks[[l_index]][[o_index]])){
       #for degree of multinom
       for (n_index in 1:length(risks[[l_index]][[o_index]][[p_index]])) {
+        #stores the risk for this risk increase, initial risk, valid final risk,
+        ## and degree of multinomial
         risk_temp <- risks[[l_index]][[o_index]][[p_index]][[n_index]]
         #for multinom distribution
         for (m_index in 1:length(distribution_labels)) {
@@ -338,18 +330,20 @@ for (l_index in 1:length(risks)) {
           all_risks_and_probs[[counter_for_distribs]]<- 
             vector(mode= "list", length =2)
           
-          #write in matrix for one column of risks, one of probs
+          #first list is for raw numbers, second for descriptive
+          #write in matrix for one column of risks, one of probs, make sure has correct number
+          #of risks and probs, one per degree level
           all_risks_and_probs[[counter_for_distribs]][[1]]<- 
             matrix(nrow = degrees[n_index], 
                    ncol = 2)
-          all_risks_and_probs[[counter_for_distribs]][[1]][,2]<- 
-            risks[[l_index]][[o_index]][[p_index]][[n_index]]
+          #write in the risks
+          all_risks_and_probs[[counter_for_distribs]][[1]][,2]<- risk_temp
           all_risks_and_probs[[counter_for_distribs]][[1]][,1]<- 
             multinomials[[n_index]][[m_index]]
           #write in important characteristics
           #initial and final from the risks vector
-          risk_temp_i <- min(risks[[l_index]][[o_index]][[p_index]][[n_index]])
-          risk_temp_f <- max(risks[[l_index]][[o_index]][[p_index]][[n_index]])
+          risk_temp_i <- min(risk_temp)
+          risk_temp_f <- max(risk_temp)
           #pull the kind of risk distribution
           risk_temp_distrib <- risk_distrib_labels[l_index]
           #pull the probability distribution for the multinom
